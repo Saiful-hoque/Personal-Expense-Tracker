@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Expense Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Header / Navbar -->
+    <header class="bg-indigo-600 shadow-md">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl"></span>
+                <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">ExpenseTracker</h1>
+            </div>
+            <div class="text-white/80 text-sm font-medium" id="current-date"></div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto px-4 py-8 w-full space-y-8 flex-1">
+
+        <!-- Notification Toast -->
+        <div id="toast" class="hidden fixed top-5 right-5 z-50 px-5 py-3 rounded-xl shadow-xl text-white font-medium text-sm transition-all transform duration-300"></div>
+
+        <!-- 1. DASHBOARD CARDS -->
+        <section class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <!-- Total Balance -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Current Balance</p>
+                    <h2 id="total-balance" class="text-3xl font-extrabold text-slate-900 mt-1">৳0.00</h2>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">💳</div>
+            </div>
+
+            <!-- Total Income -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Income</p>
+                    <h2 id="total-income" class="text-3xl font-extrabold text-emerald-600 mt-1">৳0.00</h2>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">📈</div>
+            </div>
+
+            <!-- Total Expenses -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Expenses</p>
+                    <h2 id="total-expenses" class="text-3xl font-extrabold text-rose-600 mt-1">৳0.00</h2>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold">📉</div>
+            </div>
+        </section>
+
+        <!-- GRID SECTION: Form & Controls -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- 2. ADD / EDIT TRANSACTION FORM -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 h-fit space-y-6">
+                <div class="flex items-center justify-between">
+                    <h3 id="form-title" class="text-lg font-bold text-slate-900">Add New Transaction</h3>
+                    <button id="cancel-edit-btn" type="button" class="hidden text-xs font-semibold text-rose-600 hover:underline">Cancel Edit</button>
+                </div>
+
+                <form id="transaction-form" class="space-y-4">
+                    <input type="hidden" id="edit-id">
+
+                    <!-- Title -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Transaction Title</label>
+                        <input type="text" id="title" required placeholder="e.g. Grocery Shopping" 
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    </div>
+
+                    <!-- Amount -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Amount ($)</label>
+                        <input type="number" step="0.01" id="amount" required placeholder="0.00" 
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    </div>
+
+                    <!-- Type -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Transaction Type</label>
+                        <select id="type" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                            <option value="expense">Expense</option>
+                            <option value="income">Income</option>
+                        </select>
+                    </div>
+
+                    <!-- Category -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Category</label>
+                        <select id="category" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                            <option value="Food">Food</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Salary">Salary</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Bills">Bills & Utilities</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Date -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Date</label>
+                        <input type="date" id="date" required 
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-md shadow-indigo-500/20 transition-all text-sm">
+                        Add Transaction
+                    </button>
+                </form>
+            </div>
+
+            <!-- 3, 4, 5, 6, BONUS. TRANSACTION HISTORY & FILTERS -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-6 flex flex-col justify-between">
+                
+                <div class="space-y-4">
+                    <!-- Top Bar: Filters & Search -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <h3 class="text-lg font-bold text-slate-900">Transaction History</h3>
+
+                        <!-- Type Filters -->
+                        <div class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+                            <button type="button" data-filter="all" class="filter-btn px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition-all">All</button>
+                            <button type="button" data-filter="income" class="filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">Income</button>
+                            <button type="button" data-filter="expense" class="filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">Expenses</button>
+                        </div>
+                    </div>
+
+                    <!-- Search Input (Bonus) -->
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">🔍</span>
+                        <input type="text" id="search-input" placeholder="Search transactions by title..." 
+                               class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    </div>
+
+                    <!-- Monthly Summary Card (Bonus) -->
+                    <div class="bg-indigo-50/60 p-4 rounded-xl border border-indigo-100 flex items-center justify-between text-sm">
+                        <span class="font-semibold text-indigo-900" id="current-month-label">This Month's Expenses:</span>
+                        <span id="monthly-expense-total" class="font-bold text-indigo-700">৳0.00</span>
+                    </div>
+
+                    <!-- Table Container -->
+                    <div class="overflow-x-auto rounded-xl border border-slate-100">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
+                                    <th class="py-3 px-4 font-semibold">Title</th>
+                                    <th class="py-3 px-4 font-semibold">Category</th>
+                                    <th class="py-3 px-4 font-semibold">Date</th>
+                                    <th class="py-3 px-4 font-semibold text-right">Amount</th>
+                                    <th class="py-3 px-4 font-semibold text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaction-list" class="divide-y divide-slate-100 text-sm text-slate-700">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State Message -->
+                    <div id="empty-state" class="hidden text-center py-12 space-y-2">
+                        <p class="text-3xl">📂</p>
+                        <p class="text-slate-500 font-medium">No transactions found.</p>
+                        <p class="text-xs text-slate-400">Add a new transaction using the form on the left.</p>
+                    </div>
+                </div>
+
+                <!-- Footer Summary Info -->
+                <div class="text-xs text-slate-400 text-center pt-4 border-t border-slate-100">
+                    Data saved securely in your browser's LocalStorage.
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500">
+        &copy; 2026 ExpenseTracker. All rights reserved. 
+    </footer>
+
+    <!-- Confirmation Modal (Bonus) -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+            <h4 class="text-lg font-bold text-slate-900">Confirm Deletion</h4>
+            <p class="text-sm text-slate-600">Are you sure you want to delete this transaction? This action cannot be undone.</p>
+            <div class="flex items-center justify-end space-x-3 pt-2">
+                <button id="modal-cancel" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+                <button id="modal-confirm" class="px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-500/20 transition-all">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // DOM Elements
+        const form = document.getElementById('transaction-form');
+        const formTitle = document.getElementById('form-title');
+        const submitBtn = document.getElementById('submit-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const editIdInput = document.getElementById('edit-id');
+        const titleInput = document.getElementById('title');
+        const amountInput = document.getElementById('amount');
+        const typeInput = document.getElementById('type');
+        const categoryInput = document.getElementById('category');
+        const dateInput = document.getElementById('date');
+
+        const totalBalanceEl = document.getElementById('total-balance');
+        const totalIncomeEl = document.getElementById('total-income');
+        const totalExpensesEl = document.getElementById('total-expenses');
+        const transactionListEl = document.getElementById('transaction-list');
+        const emptyStateEl = document.getElementById('empty-state');
+        const searchInput = document.getElementById('search-input');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const currentMonthLabel = document.getElementById('current-month-label');
+        const monthlyExpenseTotalEl = document.getElementById('monthly-expense-total');
+        const toast = document.getElementById('toast');
+        const currentDateEl = document.getElementById('current-date');
+
+        // Modal Elements
+        const deleteModal = document.getElementById('delete-modal');
+        const modalCancel = document.getElementById('modal-cancel');
+        const modalConfirm = document.getElementById('modal-confirm');
+        let deleteTargetId = null;
+
+        // State
+        let transactions = JSON.parse(localStorage.getItem('expense_transactions')) || [];
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        // Set default date to today
+        dateInput.valueAsDate = new Date();
+
+        // Header current date
+        const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+        currentMonthLabel.innerText = `${new Date().toLocaleString('en', { month: 'long' })} Expenses:`;
+
+        // Initialize App
+        function init() {
+            renderTransactions();
+            updateDashboard();
+        }
+
+        // Show Toast Notification
+        function showToast(message, type = 'success') {
+            toast.innerText = message;
+            toast.className = `fixed top-5 right-5 z-50 px-5 py-3 rounded-xl shadow-xl text-white font-medium text-sm transition-all transform duration-300 ${type === 'success' ? 'bg-emerald-600 shadow-emerald-500/20' : 'bg-rose-600 shadow-rose-500/20'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Add or Update Transaction
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const title = titleInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+            const type = typeInput.value;
+            const category = categoryInput.value;
+            const date = dateInput.value;
+
+            if (!title || isNaN(amount) || amount <= 0 || !date) {
+                showToast('Please provide valid transaction details.', 'error');
+                return;
+            }
+
+            const editId = editIdInput.value;
+
+            if (editId) {
+                // Edit existing
+                transactions = transactions.map(t => {
+                    if (t.id == editId) {
+                        return { id: Number(editId), title, amount, type, category, date };
+                    }
+                    return t;
+                });
+                showToast('Transaction updated successfully!');
+                resetForm();
+            } else {
+                // Add new
+                const newTransaction = {
+                    id: Date.now(),
+                    title,
+                    amount,
+                    type,
+                    category,
+                    date
+                };
+                transactions.unshift(newTransaction);
+                showToast('Transaction added successfully!');
+                form.reset();
+                dateInput.valueAsDate = new Date();
+            }
+
+            saveAndRefresh();
+        });
+
+        // Save to LocalStorage and Refresh UI
+        function saveAndRefresh() {
+            localStorage.setItem('expense_transactions', JSON.stringify(transactions));
+            renderTransactions();
+            updateDashboard();
+        }
+
+        // Update Dashboard Totals & Monthly Expenses
+        function updateDashboard() {
+            let income = 0;
+            let expense = 0;
+            let monthlyExpense = 0;
+
+            const currentMonthYear = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+
+            transactions.forEach(t => {
+                if (t.type === 'income') {
+                    income += t.amount;
+                } else {
+                    expense += t.amount;
+                    if (t.date.startsWith(currentMonthYear)) {
+                        monthlyExpense += t.amount;
+                    }
+                }
+            });
+
+            const balance = income - expense;
+
+            totalBalanceEl.innerText = `৳${balance.toFixed(2)}`;
+            totalIncomeEl.innerText = `৳${income.toFixed(2)}`;
+            totalExpensesEl.innerText = `৳${expense.toFixed(2)}`;
+            monthlyExpenseTotalEl.innerText = `৳${monthlyExpense.toFixed(2)}`;
+        }
+
+        // Render Transaction List with Filters & Search
+        function renderTransactions() {
+            transactionListEl.innerHTML = '';
+
+            // Filter
+            let filtered = transactions.filter(t => {
+                if (currentFilter === 'income') return t.type === 'income';
+                if (currentFilter === 'expense') return t.type === 'expense';
+                return true;
+            });
+
+            // Search
+            if (searchQuery) {
+                filtered = filtered.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()));
+            }
+
+            if (filtered.length === 0) {
+                emptyStateEl.classList.remove('hidden');
+                return;
+            } else {
+                emptyStateEl.classList.add('hidden');
+            }
+
+            filtered.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-none';
+
+                const isIncome = t.type === 'income';
+                const amountSign = isIncome ? '+' : '-';
+                const amountColor = isIncome ? 'text-emerald-600' : 'text-slate-900';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-800">${escapeHtml(t.title)}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-block px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold">${t.category}</span>
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-500">${t.date}</td>
+                    <td class="py-3 px-4 text-right font-bold ${amountColor}">${amountSign}$${t.amount.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-center space-x-2">
+                        <button onclick="editTransaction(${t.id})" class="text-indigo-600 hover:text-indigo-900 font-semibold text-xs bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-all">Edit</button>
+                        <button onclick="promptDelete(${t.id})" class="text-rose-600 hover:text-rose-900 font-semibold text-xs bg-rose-50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg transition-all">Delete</button>
+                    </td>
+                `;
+                transactionListEl.appendChild(tr);
+            });
+        }
+
+        // Edit Transaction Setup
+        window.editTransaction = function(id) {
+            const t = transactions.find(item => item.id === id);
+            if (!t) return;
+
+            editIdInput.value = t.id;
+            titleInput.value = t.title;
+            amountInput.value = t.amount;
+            typeInput.value = t.type;
+            categoryInput.value = t.category;
+            dateInput.value = t.date;
+
+            formTitle.innerText = 'Edit Transaction';
+            submitBtn.innerText = 'Update Transaction';
+            cancelEditBtn.classList.remove('hidden');
+
+            // Scroll to form on mobile
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Cancel Edit
+        cancelEditBtn.addEventListener('click', () => {
+            resetForm();
+        });
+
+        function resetForm() {
+            form.reset();
+            editIdInput.value = '';
+            formTitle.innerText = 'Add New Transaction';
+            submitBtn.innerText = 'Add Transaction';
+            cancelEditBtn.classList.add('hidden');
+            dateInput.valueAsDate = new Date();
+        }
+
+        // Delete Confirmation Modal
+        window.promptDelete = function(id) {
+            deleteTargetId = id;
+            deleteModal.classList.remove('hidden');
+        }
+
+        modalCancel.addEventListener('click', () => {
+            deleteTargetId = null;
+            deleteModal.classList.add('hidden');
+        });
+
+        modalConfirm.addEventListener('click', () => {
+            if (deleteTargetId !== null) {
+                transactions = transactions.filter(t => t.id !== deleteTargetId);
+                showToast('Transaction deleted successfully!');
+                saveAndRefresh();
+                deleteTargetId = null;
+                deleteModal.classList.add('hidden');
+            }
+        });
+
+        // Filter Event Listeners
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                    b.classList.add('text-slate-600');
+                });
+                e.target.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                e.target.classList.remove('text-slate-600');
+
+                currentFilter = e.target.getAttribute('data-filter');
+                renderTransactions();
+            });
+        });
+
+        // Search Event Listener (Bonus)
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim();
+            renderTransactions();
+        });
+
+        // Helper to prevent XSS
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
